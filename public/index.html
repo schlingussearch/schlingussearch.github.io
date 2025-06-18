@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>schlingus search</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1 class="title">schlingus search</h1>
+
+  <form id="searchForm">
+    <input id="searchInput" type="text" placeholder="Search..." required />
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="resultsContainer">
+    <div>
+      <h2>web results</h2>
+      <div id="webResults"></div>
+    </div>
+    <div>
+      <h2>image results</h2>
+      <div id="imageResults" class="images"></div>
+    </div>
+  </div>
+
+  <script>
+    const webapiKey = 'AIzaSyARwd8ABocjWMQ8lWluWncBfNX4CVh3I3c';
+    const webcseKey = 'c74c7f15b306e48b4';
+    const imgapiKey = 'AIzaSyDVnku8Z8GME3KPC7hMIVvKQBEcWEZi0Dk';
+    const imgcseKey = '561acb8306257404f';
+
+    document.getElementById('searchForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const query = document.getElementById('searchInput').value;
+
+      // Clear previous results
+      document.getElementById('webResults').innerHTML = 'Loading web results...';
+      document.getElementById('imageResults').innerHTML = 'Loading images...';
+
+      // Web search URL (no searchType)
+      const webUrl = `https://www.googleapis.com/customsearch/v1?key=${webapiKey}&cx=${webcseKey}&q=${encodeURIComponent(query)}`;
+
+      // Image search URL (searchType=image)
+      const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${imgapiKey}&cx=${imgcseKey}&q=${encodeURIComponent(query)}&searchType=image`;
+
+      // Fetch web results
+      fetch(webUrl)
+        .then(res => res.json())
+        .then(data => {
+          const webDiv = document.getElementById('webResults');
+          webDiv.innerHTML = '';
+          if (data.items && data.items.length) {
+            data.items.forEach(item => {
+              const div = document.createElement('div');
+              div.className = 'result';
+
+              const a = document.createElement('a');
+              a.href = item.link;
+              a.textContent = item.title;
+              a.target = '_blank';
+
+              const p = document.createElement('p');
+              p.textContent = item.snippet;
+
+              div.appendChild(a);
+              div.appendChild(p);
+              webDiv.appendChild(div);
+            });
+          } else {
+            webDiv.textContent = 'No web results found.';
+          }
+        })
+        .catch(err => {
+          document.getElementById('webResults').textContent = 'Error loading web results.';
+          console.error(err);
+        });
+
+      // Fetch image results
+      fetch(imageUrl)
+        .then(res => res.json())
+        .then(data => {
+          const imgDiv = document.getElementById('imageResults');
+          imgDiv.innerHTML = '';
+          if (data.items && data.items.length) {
+            data.items.forEach(item => {
+              const img = document.createElement('img');
+              img.src = item.link; // direct image URL
+              img.alt = item.title;
+              img.title = item.title;
+              imgDiv.appendChild(img);
+            });
+          } else {
+            imgDiv.textContent = 'No images found.';
+          }
+        })
+        .catch(err => {
+          document.getElementById('imageResults').textContent = 'Error loading images.';
+          console.error(err);
+        });
+    });
+  </script>
+</body>
+</html>
