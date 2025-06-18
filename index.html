@@ -7,7 +7,6 @@
 </head>
 <body>
   <h1 class="title">schlingus search</h1>
-
   <form id="searchForm">
     <input id="searchInput" type="text" placeholder="Search..." required />
     <button type="submit">Search</button>
@@ -30,21 +29,29 @@
     const imgapiKey = 'AIzaSyDVnku8Z8GME3KPC7hMIVvKQBEcWEZi0Dk';
     const imgcseKey = '561acb8306257404f';
 
-    document.getElementById('searchForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const query = document.getElementById('searchInput').value;
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+
+    // Utility: get query param by name
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    // Perform search function (extract for reuse)
+    function performSearch(query) {
+      if (!query) return;
+      
+      // Update input value
+      searchInput.value = query;
 
       // Clear previous results
       document.getElementById('webResults').innerHTML = 'Loading web results...';
       document.getElementById('imageResults').innerHTML = 'Loading images...';
 
-      // Web search URL (no searchType)
       const webUrl = `https://www.googleapis.com/customsearch/v1?key=${webapiKey}&cx=${webcseKey}&q=${encodeURIComponent(query)}`;
-
-      // Image search URL (searchType=image)
       const imageUrl = `https://www.googleapis.com/customsearch/v1?key=${imgapiKey}&cx=${imgcseKey}&q=${encodeURIComponent(query)}&searchType=image`;
 
-      // Fetch web results
       fetch(webUrl)
         .then(res => res.json())
         .then(data => {
@@ -76,7 +83,6 @@
           console.error(err);
         });
 
-      // Fetch image results
       fetch(imageUrl)
         .then(res => res.json())
         .then(data => {
@@ -85,7 +91,7 @@
           if (data.items && data.items.length) {
             data.items.forEach(item => {
               const img = document.createElement('img');
-              img.src = item.link; // direct image URL
+              img.src = item.link;
               img.alt = item.title;
               img.title = item.title;
               imgDiv.appendChild(img);
@@ -98,6 +104,27 @@
           document.getElementById('imageResults').textContent = 'Error loading images.';
           console.error(err);
         });
+    }
+
+    // On form submit
+    searchForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const query = searchInput.value.trim();
+      if (!query) return;
+
+      // Update URL query param without reload
+      const newUrl = `${window.location.pathname}?q=${encodeURIComponent(query)}`;
+      window.history.replaceState(null, '', newUrl);
+
+      performSearch(query);
+    });
+
+    // On page load: check if there's a query param & run search automatically
+    window.addEventListener('load', () => {
+      const initialQuery = getQueryParam('q');
+      if (initialQuery) {
+        performSearch(initialQuery);
+      }
     });
   </script>
 </body>
